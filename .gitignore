@@ -1,0 +1,15 @@
+# Visual Studio cache and per-user settings
+.vs/
+*.user
+
+# Build output
+x64/
+x86/
+Debug/
+Release/
+*.obj
+*.pdb
+*.ilk
+*.idb
+*.exe
+*.tlog
