@@ -1,5 +1,6 @@
 #include <iostream>
 #include "GamesEngineeringBase.h" // Include the GamesEngineeringBase header
+#include "Camera.h"
 
 int main() {
 
@@ -18,6 +19,11 @@ int main() {
     // Load an image and place it at coordinates (300, 300)
     GamesEngineeringBase::Image image;
     image.load("Resources/A_Resized.png");
+
+    // Load background image
+    GamesEngineeringBase::Image background;
+    background.load("Resources/Background.png");
+
     unsigned int posX = (WORLD_WIDTH/2)- (image.width/2);  // Initial x-coordinate for the plane image. placed in the middle of the world 
     unsigned int posY = (WORLD_HEIGHT/2) - (image.height/2);  // Initial y-coordinate for the plane image.
 
@@ -52,18 +58,17 @@ int main() {
         // Calculate how far the plane should move based on elapsed time (ensuring a minimum movement of 1 pixel)
         unsigned int move_amount = static_cast<unsigned int>(std::max(MOVE_SPEED * dt, 1.0f));
 
-        //keep the player inside the window for the impassable wall
-        unsigned int maxX = canvas.getWidth() - image.width;
-        unsigned int maxY = canvas.getHeight() - image.height;
+        //keep the player from leaving the screen
+        unsigned int maxX = WORLD_WIDTH - image.width;
+        unsigned int maxY = WORLD_HEIGHT - image.height;
 
-       
-
+        
        
         // Control the plane's movement using W, S, A, D keys
         if (canvas.keyPressed('W')) // Move plane up
         {
             if (posY < move_amount)
-            {\
+            {
                 posY = 0;                      
             }
             else
@@ -74,6 +79,10 @@ int main() {
         if (canvas.keyPressed('S')) // Move plane down
         {
             posY = posY + move_amount;
+            if (posY > maxY)
+            {
+                posY = maxY;   // stop at bottom edge
+            }
         }
         if (canvas.keyPressed('A')) // Move plane left
         {
@@ -89,38 +98,111 @@ int main() {
         if (canvas.keyPressed('D')) // Move plane right
         {
             posX = posX + move_amount;
+            if (posX > maxX)
+            {
+                posX = maxX;   // stop at right edge
+            }
         }
 
 
-        if (posX > maxX) posX = maxX;   // stop at right edge
-        if (posY > maxY) posY = maxY;   // stop at bottom edge
+        
+       
 
         // Check if the plane goes out of bounds (off the screen)
         if (posX > (canvas.getWidth() - image.width) || posX < 0 || posY >(canvas.getHeight() - image.height) || posY < 0)
         {
             // Play the explosion sound when plane hits the edge
-            sounds.play("Resources/explosion.wav");
+            //sounds.play("Resources/explosion.wav");
 
         }
+
+
+        // get the mid point (X,Y) of the character in the world
+        unsigned int characterCentreX = posX + (image.width / 2);
+        unsigned int characterCentreY = posY + (image.height / 2);
+
+        unsigned int halfScreenW = canvas.getWidth() / 2;
+        unsigned int halfScreenH = canvas.getHeight() / 2;
+
+        if (characterCentreX < halfScreenW) {
+
+            camX = 0;
+        }
+        else {
+
+            camX = characterCentreX - halfScreenW;
+        }
+
+        if (characterCentreY < halfScreenH)
+        {
+            camY = 0;
+        }
+        else
+        {
+            camY = characterCentreY - halfScreenH;
+        }
+
+
+        // Don't let the camera go past the right or bottom of the map
+        if (camX > WORLD_WIDTH - canvas.getWidth())  camX = WORLD_WIDTH - canvas.getWidth();
+        if (camY > WORLD_HEIGHT - canvas.getHeight()) camY = WORLD_HEIGHT - canvas.getHeight();
+
+
+
+
+
+
+
+
+
+
+
+
 
         // Clear the entire canvas with a blue background (RGB: 0, 0, 255)
         for (unsigned int i = 0; i < (canvas.getWidth() * canvas.getHeight()); i++)
         {
-            canvas.draw(i, 0, 0, 255); // Drawing the blue background pixel by pixel.
+            //canvas.draw(i, 0, 0, 0); // Drawing the blue background pixel by pixel.
         }
 
 
-        //  Draw the image every frame (even though position doesn't change)
-        for (unsigned int i = 0; i < image.height; i++)
+
+        // Draw the visible part of the world using the background image
+        for (unsigned int sy = 0; sy < canvas.getHeight(); sy++)
         {
-            for (unsigned int n = 0; n < image.width; n++)
+            for (unsigned int sx = 0; sx < canvas.getWidth(); sx++)
             {
-                if ((posX + n) >= 0 && (posX + n) < canvas.getWidth() &&
-                    (posY + i) >= 0 && (posY + i) < canvas.getHeight())
+                // Which world pixel is at this screen pixel?
+                unsigned int worldX = sx + camX;
+                unsigned int worldY = sy + camY;
+
+                // Which pixel of the background image is that? (repeats the image)
+                unsigned int imgX = worldX % background.width;
+                unsigned int imgY = worldY % background.height;
+
+                canvas.draw(sx, sy, background.atUnchecked(imgX, imgY));
+            }
+        }
+
+
+
+        // Step 1: world position -> screen position
+        unsigned int screenX = posX - camX;
+        unsigned int screenY = posY - camY;
+
+        // Step 2: go through every pixel of the image
+        for (unsigned int i = 0; i < image.height; i++)          // each row
+        {
+            for (unsigned int n = 0; n < image.width; n++)       // each pixel in the row
+            {
+                // Step 3: only if this pixel lands inside the window
+                if ((screenX + n) < canvas.getWidth() && (screenY + i) < canvas.getHeight())
                 {
+                    // Step 4: only if the pixel isn't see-through
                     if (image.alphaAt(n, i) > 210)
                     {
-                        canvas.draw(posX + n, posY + i, image.at(n, i));
+                        // Step 5: copy the pixel's colour onto the screen
+                        canvas.draw(screenX + n, screenY + i, image.at(n, i));
                     }
                 }
             }
