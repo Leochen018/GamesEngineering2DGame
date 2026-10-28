@@ -1,5 +1,5 @@
 #pragma once
-#include "GamesEngineeringBase.h"
+#include "GamesEngineeringBase.hpp"
 
 class Camera
 {

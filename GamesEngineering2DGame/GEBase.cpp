@@ -1,6 +1,8 @@
 #include <iostream>
-#include "GamesEngineeringBase.h" // Include the GamesEngineeringBase header
-#include "Camera.h"
+#include "GamesEngineeringBase.hpp" // Include the GamesEngineeringBase header
+#include "Camera.hpp"
+#include "Vec2f.hpp" // Include the Vector header for addition and multiplication on 2D vectors
+#include "Renderer.hpp"
 
 int main() {
 
@@ -9,23 +11,25 @@ int main() {
     canvas.create(1024, 768, "Leo's game");
     bool running = true; // Variable to control the main loop's running state.
 
-    const unsigned int WORLD_WIDTH = 3000;
-    const unsigned int WORLD_HEIGHT = 2000;
+    const Vec2f WORLDSIZE = { 2000,2000 };
 
     // Create a camera on the top-left corner 
     unsigned int camX = 0;
     unsigned int camY = 0;
 
     // Load an image and place it at coordinates (300, 300)
+   
     GamesEngineeringBase::Image image;
-    image.load("Resources/A_Resized.png");
 
+
+    image.load("Resources/A_Resized.png");
+    Renderer_draw_image(canvas, {100,220}, image);
     // Load background image
     GamesEngineeringBase::Image background;
     background.load("Resources/Background.png");
 
-    unsigned int posX = (WORLD_WIDTH/2)- (image.width/2);  // Initial x-coordinate for the plane image. placed in the middle of the world 
-    unsigned int posY = (WORLD_HEIGHT/2) - (image.height/2);  // Initial y-coordinate for the plane image.
+    unsigned int posX = (WORLDSIZE.x_/2)- (image.width/2);  // Initial x-coordinate for the plane image. placed in the middle of the world 
+    unsigned int posY = (WORLDSIZE.y_/2) - (image.height/2);  // Initial y-coordinate for the plane image.
 
     // Load and play background music and an explosion sound
     GamesEngineeringBase::SoundManager sounds;
@@ -59,8 +63,8 @@ int main() {
         unsigned int move_amount = static_cast<unsigned int>(std::max(MOVE_SPEED * dt, 1.0f));
 
         //keep the player from leaving the screen
-        unsigned int maxX = WORLD_WIDTH - image.width;
-        unsigned int maxY = WORLD_HEIGHT - image.height;
+        unsigned int maxX = WORLDSIZE.x_ - image.width;
+        unsigned int maxY = WORLDSIZE.y_ - image.height;
 
         
        
@@ -144,8 +148,8 @@ int main() {
 
 
         // Don't let the camera go past the right or bottom of the map
-        if (camX > WORLD_WIDTH - canvas.getWidth())  camX = WORLD_WIDTH - canvas.getWidth();
-        if (camY > WORLD_HEIGHT - canvas.getHeight()) camY = WORLD_HEIGHT - canvas.getHeight();
+        if (camX > WORLDSIZE.x_ - canvas.getWidth())  camX = WORLDSIZE.x_ - canvas.getWidth();
+        if (camY > WORLDSIZE.y_ - canvas.getHeight()) camY = WORLDSIZE.y_ - canvas.getHeight();
 
 
 

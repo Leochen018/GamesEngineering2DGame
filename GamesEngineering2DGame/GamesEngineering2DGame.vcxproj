@@ -139,8 +139,11 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="GamesEngineeringBase.h" />
+    <ClInclude Include="Camera.hpp" />
+    <ClInclude Include="GamesEngineeringBase.hpp" />
+    <ClInclude Include="Renderer.hpp" />
+    <ClInclude Include="shapes.hpp" />
+    <ClInclude Include="Vec2f.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GEBase.cpp" />
