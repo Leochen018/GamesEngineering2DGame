@@ -6,7 +6,7 @@
 #include "shapes.hpp"
 
 
-inline void Renderer_draw_image(GamesEngineeringBase::Window& window,
+inline void Renderer_draw_image(GamesEngineeringBase::Window& canvas,
     Vec2f position,
     const GamesEngineeringBase::Image& image)
 {
@@ -22,7 +22,7 @@ inline void Renderer_draw_image(GamesEngineeringBase::Window& window,
     {
         const int y = position.y_ + static_cast<int>(row);
 
-        if (y < 0 || y >= window.getHeight())
+        if (y < 0 || y >= canvas.getHeight())
         {
             // std::cout << "Skipping row " << row << " as it is outside the window bounds." << std::endl;
             continue;
@@ -32,7 +32,7 @@ inline void Renderer_draw_image(GamesEngineeringBase::Window& window,
         {
             const int x = position.x_ + static_cast<int>(col);
 
-            if (x < 0 || x >= window.getWidth())
+            if (x < 0 || x >= canvas.getWidth())
             {
                 // std::cout << "Skipping column " << col << " as it is outside the window bounds." << std::endl;  
                 continue;
@@ -42,7 +42,7 @@ inline void Renderer_draw_image(GamesEngineeringBase::Window& window,
 
             if (image.channels == 3 || image.data[pixelIndex + 3] != 0)
             {
-                window.draw(x, y, &image.data[pixelIndex]);
+                canvas.draw(x, y, &image.data[pixelIndex]);
             }
         }
     }

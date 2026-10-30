@@ -193,7 +193,7 @@ int main() {
         // Step 1: world position -> screen position
         unsigned int screenX = posX - camX;
         unsigned int screenY = posY - camY;
-
+        
         // Step 2: go through every pixel of the image
         for (unsigned int i = 0; i < image.height; i++)          // each row
         {
