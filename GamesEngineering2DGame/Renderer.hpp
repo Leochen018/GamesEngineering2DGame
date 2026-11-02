@@ -16,7 +16,7 @@ inline void Renderer_draw_image(GamesEngineeringBase::Window& canvas,
         return;
     }
 
-    // std::cout << "Drawing image at position (" << position.x_ << ", " << position.y_ << ")" << std::endl;
+     std::cout << "Drawing image at position (" << position.x_ << ", " << position.y_ << ")" << std::endl;
 
     for (unsigned int row = 0; row < image.height; ++row)
     {

@@ -8,22 +8,23 @@ int main() {
 
     // Create a canvas window with dimensions 1024x768 and title “Tiles"
     GamesEngineeringBase::Window canvas;
-    canvas.create(1024, 768, "Leo's game");
+    canvas.create(1024, 768, "test game");
     bool running = true; // Variable to control the main loop's running state.
 
     const Vec2f WORLDSIZE = { 2000,2000 };
 
-    // Create a camera on the top-left corner 
-    unsigned int camX = 0;
-    unsigned int camY = 0;
+    // Create a camera object 
+    Camera camera(canvas.getWidth(), canvas.getHeight(),
+        static_cast<int>(WORLDSIZE.x_), static_cast<int>(WORLDSIZE.y_));
 
     // Load an image and place it at coordinates (300, 300)
-   
     GamesEngineeringBase::Image image;
-
-
     image.load("Resources/A_Resized.png");
-    Renderer_draw_image(canvas, {100,220}, image);
+
+    // Load an enemy 
+    GamesEngineeringBase::Image enemy;
+    enemy.load("Resources/L2.png");
+
     // Load background image
     GamesEngineeringBase::Image background;
     background.load("Resources/Background.png");
@@ -112,73 +113,28 @@ int main() {
         
        
 
-        // Check if the plane goes out of bounds (off the screen)
-        if (posX > (canvas.getWidth() - image.width) || posX < 0 || posY >(canvas.getHeight() - image.height) || posY < 0)
-        {
-            // Play the explosion sound when plane hits the edge
-            //sounds.play("Resources/explosion.wav");
+        // posX,posY are the world coordinates of the left corner of the image 
 
-        }
-
-
-        // get the mid point (X,Y) of the character in the world
+        // get the coordinates of the midpoint of the character in the world
         unsigned int characterCentreX = posX + (image.width / 2);
         unsigned int characterCentreY = posY + (image.height / 2);
 
-        unsigned int halfScreenW = canvas.getWidth() / 2;
-        unsigned int halfScreenH = canvas.getHeight() / 2;
-
-        if (characterCentreX < halfScreenW) {
-
-            camX = 0;
-        }
-        else {
-
-            camX = characterCentreX - halfScreenW;
-        }
-
-        if (characterCentreY < halfScreenH)
-        {
-            camY = 0;
-        }
-        else
-        {
-            camY = characterCentreY - halfScreenH;
-        }
-
-
-        // Don't let the camera go past the right or bottom of the map
-        if (camX > WORLDSIZE.x_ - canvas.getWidth())  camX = WORLDSIZE.x_ - canvas.getWidth();
-        if (camY > WORLDSIZE.y_ - canvas.getHeight()) camY = WORLDSIZE.y_ - canvas.getHeight();
+        camera.follow({ static_cast<float>(characterCentreX),
+                          static_cast<float>(characterCentreY) });
+       
 
 
 
-
-
-
-
-
-
-
-
-
-
-        // Clear the entire canvas with a blue background (RGB: 0, 0, 255)
-        for (unsigned int i = 0; i < (canvas.getWidth() * canvas.getHeight()); i++)
-        {
-            //canvas.draw(i, 0, 0, 0); // Drawing the blue background pixel by pixel.
-        }
-
-
-
+    
+        
         // Draw the visible part of the world using the background image
         for (unsigned int sy = 0; sy < canvas.getHeight(); sy++)
         {
             for (unsigned int sx = 0; sx < canvas.getWidth(); sx++)
             {
                 // Which world pixel is at this screen pixel?
-                unsigned int worldX = sx + camX;
-                unsigned int worldY = sy + camY;
+                unsigned int worldX = sx + camera.getX();
+                unsigned int worldY = sy + camera.getY();
 
                 // Which pixel of the background image is that? (repeats the image)
                 unsigned int imgX = worldX % background.width;
@@ -187,32 +143,20 @@ int main() {
                 canvas.draw(sx, sy, background.atUnchecked(imgX, imgY));
             }
         }
-
-
-
-        // Step 1: world position -> screen position
-        unsigned int screenX = posX - camX;
-        unsigned int screenY = posY - camY;
         
-        // Step 2: go through every pixel of the image
-        for (unsigned int i = 0; i < image.height; i++)          // each row
-        {
-            for (unsigned int n = 0; n < image.width; n++)       // each pixel in the row
-            {
-                // Step 3: only if this pixel lands inside the window
-                if ((screenX + n) < canvas.getWidth() && (screenY + i) < canvas.getHeight())
-                {
-                    // Step 4: only if the pixel isn't see-through
-                    if (image.alphaAt(n, i) > 210)
-                    {
-                        // Step 5: copy the pixel's colour onto the screen
-                        canvas.draw(screenX + n, screenY + i, image.at(n, i));
-                    }
-                }
-            }
-        }
+        
+        // world position -> screen position
+        int screenX = camera.toScreenX(posX);
+        int screenY = camera.toScreenY(posY);
+        
+        Renderer_draw_image(canvas,
+            { static_cast<float>(screenX), static_cast<float>(screenY) },
+            image);
+        
+        // draw the enemy at position 0,0
+        Renderer_draw_image(canvas, {0,0} ,enemy);
 
-
+      
         // Display the frame on the screen. This must be called once the frame is finished in order to display the frame.
         canvas.present();
     }
