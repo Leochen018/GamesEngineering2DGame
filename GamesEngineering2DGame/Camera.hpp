@@ -1,6 +1,6 @@
 #pragma once
 #include "GamesEngineeringBase.hpp"
-#include "Vec2f.hpp"
+#include "Vector.hpp"
 
 class Camera
 {
@@ -36,9 +36,11 @@ public:
 			camY = worldH - screenH;
 		}
 	}
-	// world -> screen
-	int toScreenX(int worldX) const { return worldX - camX; }
-	int toScreenY(int worldY) const { return worldY - camY; }
+	Vec2f toScreen(const Vec2f& worldPos) const
+	{
+		return { worldPos.x_ - static_cast<float>(camX),
+				 worldPos.y_ - static_cast<float>(camY) };
+	}
 
 	int getX() const 
 	{

@@ -140,13 +140,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Camera.hpp" />
+    <ClInclude Include="Enemy.hpp" />
+    <ClInclude Include="Entity.hpp" />
+    <ClInclude Include="GameEntity.hpp" />
     <ClInclude Include="GamesEngineeringBase.hpp" />
+    <ClInclude Include="Player.hpp" />
     <ClInclude Include="Renderer.hpp" />
     <ClInclude Include="shapes.hpp" />
-    <ClInclude Include="Vec2f.hpp" />
+    <ClInclude Include="TileMap.hpp" />
+    <ClInclude Include="Vector.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GEBase.cpp" />
+    <ClCompile Include="60secGame.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

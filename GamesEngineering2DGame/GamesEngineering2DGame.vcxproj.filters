@@ -21,7 +21,7 @@
     <ClInclude Include="Camera.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Vec2f.hpp">
+    <ClInclude Include="Vector.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Renderer.hpp">
@@ -30,9 +30,24 @@
     <ClInclude Include="shapes.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TileMap.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemy.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEntity.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GEBase.cpp">
+    <ClCompile Include="60secGame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
