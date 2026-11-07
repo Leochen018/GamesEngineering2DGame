@@ -145,6 +145,7 @@
     <ClInclude Include="GameEntity.hpp" />
     <ClInclude Include="GamesEngineeringBase.hpp" />
     <ClInclude Include="Player.hpp" />
+    <ClInclude Include="Projectile.hpp" />
     <ClInclude Include="Renderer.hpp" />
     <ClInclude Include="shapes.hpp" />
     <ClInclude Include="TileMap.hpp" />

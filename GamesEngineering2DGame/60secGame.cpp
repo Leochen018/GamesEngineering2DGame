@@ -5,10 +5,15 @@
 #include "Renderer.hpp"
 #include "TileMap.hpp" // Include the world map background
 #include "Enemy.hpp"
+#include "Player.hpp"
+#include "Projectile.hpp"
+
+
+const int MAX_PICKUPS = 20;
 
 int main() {
 
-    // Create a canvas window with dimensions 1024x768 and title “Tiles"
+    
     GamesEngineeringBase::Window canvas;
     canvas.create(1024, 768, "test game");
     bool running = true; // Variable to control the main loop's running state.
@@ -34,21 +39,36 @@ int main() {
     Camera camera(canvas.getWidth(), canvas.getHeight(),
         static_cast<int>(WORLDSIZE.x_), static_cast<int>(WORLDSIZE.y_));
 
-    // Load player
-    GamesEngineeringBase::Image player;
-    player.load("Resources/player.png");
+    GamesEngineeringBase::Image projectile1Image;
+    projectile1Image.load("Resources/projectile1.png");
+    ProjectileEntity projectiles[200];
+
+    
+    GamesEngineeringBase::Image playerImage;
+    playerImage.load("Resources/player.png");
+
+    Player player({ 300.0f,400.0f }, &playerImage, &map, 700.0f);
 
     // Load an enemy 
-    GamesEngineeringBase::Image enemy;
-    enemy.load("Resources/enemy.png");
+    GamesEngineeringBase::Image enemyImage;
+    enemyImage.load("Resources/enemy.png");
 
-    EnemyEntity enemy1({ 50.0f, 50.0f }, &enemy, &map);
+    EnemyEntity enemy1({ 50.0f, 50.0f }, &enemyImage, &map);
 
-    //inital position of player
-    int posX = (WORLDSIZE.x_/2)- (player.width/2);  
-    int posY = (WORLDSIZE.y_/2) - (player.height/2);  
+    SpriteEntity* playerObstacles[1] = { &enemy1 };
+    player.SetObstacles(playerObstacles, 1);
 
-    // Load and play background music and an explosion sound
+    enemy1.SetBlocker(&player);
+
+
+    // load health potion
+    GamesEngineeringBase::Image potionHealthImage;
+    potionHealthImage.load("Resources/potion_health.png");
+    PickUpEntity pickups[MAX_PICKUPS];
+
+    pickups[0].Place({ 500.0f, 300.0f }, &potionHealthImage, PickUpType::Health, 3);
+    pickups[1].Place({ 900.0f, 1200.0f }, &potionHealthImage, PickUpType::Health, 3);
+
     GamesEngineeringBase::SoundManager sounds;
     sounds.loadMusic("Resources/music.wav");
     //sounds.playMusic();
@@ -57,8 +77,7 @@ int main() {
     // Timer object to manage time-based events, such as movement speed
     GamesEngineeringBase::Timer timer;
 
-    // Define a move speed for the plane, in this case it is pixels moved per second
-    float MOVE_SPEED = 700.0f;
+
 
     // Main game loop
     while (running)
@@ -76,8 +95,7 @@ int main() {
         // Get the delta time for the frame
         float dt = timer.dt();
 
-        // Calculate how far the plane should move based on elapsed time (ensuring a minimum movement of 1 pixel)
-        unsigned int move_amount = static_cast<unsigned int>(std::max(MOVE_SPEED * dt, 1.0f));
+       
        
         Vec2f input{ 0, 0 };
         // Control the plane's movement using W, S, A, D keys
@@ -98,45 +116,84 @@ int main() {
             input.x_ = 1.0f;
         }
 
-        //size of the player's character image. ie 64 x 64
-        int w = player.width;
-        int h = player.height;
+        Vec2f aim{ 0.0f, 0.0f };
 
-        for (unsigned int i = 0; i < move_amount; i++)
+        if (canvas.keyPressed(VK_UP))
         {
-            if (input.x_ != 0 && !map.isAreaBlocked(posX + input.x_, posY, w, h))
-            {
-                posX += input.x_;
-            }
-            if (input.y_ != 0 && !map.isAreaBlocked(posX, posY + input.y_, w, h))
-            {
-                posY += input.y_;
-            }
+            aim.y_ = -1.0f;
+        }
+        if (canvas.keyPressed(VK_DOWN))
+        {
+            aim.y_ = 1.0f;
+        }
+        if (canvas.keyPressed(VK_LEFT))
+        {
+            aim.x_ = -1.0f;
+        }
+        if (canvas.keyPressed(VK_RIGHT))
+        {
+            aim.x_ = 1.0f;
+        }
+        
+        if (aim.length() > 0.0f && player.CanShoot())
+        {
+            Vec2f direction = aim * (1.0f / aim.length());
+
+            SpawnProjectile(projectiles, 200, player.GetCentre(), direction,
+                800.0f, &projectile1Image, &map, true, 1);
+            player.resetShootTimer();
         }
 
 
-        
+        player.SetInputAxis(input);
+        player.Update(dt);
+
+
+        player.CollectPickups(pickups, MAX_PICKUPS);
+        camera.follow(player.GetCentre());
        
 
-        // posX,posY are the world coordinates of the left corner of the image 
-
-        // get the coordinates of the midpoint of the character in the world
-
-        Vec2i characterCentre = { posX + (player.width / 2), posY + (player.height / 2) };
-
-        camera.follow(characterCentre.convertTo<float>());
-       
-
-        enemy1.SetTarget(characterCentre.convertTo<float>());
+        enemy1.SetTarget(player.GetCentre());
         enemy1.Update(dt);
 
+        for (int i = 0; i < 200; i++)
+        {
+            ProjectileEntity& p = projectiles[i];
+            if (!p.IsAlive()) continue;
+            p.Update(dt);
+            if (!p.IsAlive()) continue;
+
+            Vec2f q = p.GetPosition();
+            if (p.IsFromPlayer() && enemy1.IsAlive() && enemy1.OverlapsBox(q.x_, q.y_, p.GetImageWidth(), p.GetImageHeight()))
+            {
+                enemy1.TakeDamage(p.GetDamage());
+                p.Kill();
+            }
+        }
+        if (!enemy1.IsAlive())
+        {
+            playerObstacles[0] = nullptr;
+        }
+        
+
         map.draw(canvas, camera.getX(), camera.getY());
-        enemy1.Draw(canvas, camera);
+
+        for (int i = 0; i < MAX_PICKUPS; i++)
+        {
+            pickups[i].Draw(canvas, camera);
+        }
+
+        if (enemy1.IsAlive())
+        {
+            enemy1.Draw(canvas, camera);
+        }
+        for (int i = 0; i < 200; i++)
+        {
+            projectiles[i].Draw(canvas, camera);
+        }
+        player.Draw(canvas, camera);
         
-        // world position -> screen position
-        Vec2f playerScreen = camera.toScreen(Vec2i{ posX,posY }.convertTo<float>());
-        
-        Renderer_draw_image(canvas, playerScreen, player);
+       
         
 
         // Display the frame on the screen. This must be called once the frame is finished in order to display the frame.

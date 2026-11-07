@@ -17,6 +17,24 @@ public:
 		target_ = target;
 	}
 	
+	void SetBlocker(const SpriteEntity* blocker)
+	{
+		blocker_ = blocker;
+	}
+
+	void TakeDamage(int amount)
+	{
+		health_ -= amount;
+	}
+
+	bool IsAlive() const
+	{
+		if (health_ > 0)
+		{
+			return true;
+		}
+		return false; 
+	}
 	virtual void Update(float delta_time) override
 	{
 		// get the direction from enemy centre to the player. target - origin position
@@ -35,18 +53,18 @@ public:
 		int h = GetImageHeight();
 		Vec2f pos = GetPosition();
 
-		if (map_ == nullptr || !map_->isAreaBlocked(static_cast<int>(pos.x_ + movement.x_), static_cast<int>(pos.y_),w,h))
+		if ((map_ == nullptr || !map_->isAreaBlocked(static_cast<int>(pos.x_ + movement.x_), static_cast<int>(pos.y_),w,h))
+			&& !(blocker_ != nullptr && blocker_->OverlapsBox(pos.x_ + movement.x_, pos.y_, w, h)))
 		{
 			pos.x_ += movement.x_;
 		}
-		if (map_ == nullptr || !map_->isAreaBlocked(static_cast<int>(pos.x_), static_cast<int>(pos.y_ + movement.y_), w, h))
+		if ((map_ == nullptr || !map_->isAreaBlocked(static_cast<int>(pos.x_), static_cast<int>(pos.y_ + movement.y_), w, h))
+			&& !(blocker_ != nullptr && blocker_->OverlapsBox(pos.x_, pos.y_ + movement.y_, w, h)))
 		{
 			pos.y_ += movement.y_;
 		}
 		SetPosition(pos);
 		
-
-
 	}
 	void SetSpeed(float speed)
 	{
@@ -57,4 +75,7 @@ protected:
 	Vec2f target_ = {0.0f, 0.0f};
 	float stopDistance_ = 40.0f;   // stop this close to the target's centre
 	float speed_ = 200.0f;
+	int health_ = 6;
+private:
+	const SpriteEntity* blocker_ = nullptr;
 };
