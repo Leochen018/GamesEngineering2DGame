@@ -144,15 +144,18 @@
     <ClInclude Include="Entity.hpp" />
     <ClInclude Include="GameEntity.hpp" />
     <ClInclude Include="GamesEngineeringBase.hpp" />
+    <ClInclude Include="GameState.hpp" />
+    <ClInclude Include="GameStatistics.hpp" />
     <ClInclude Include="Player.hpp" />
     <ClInclude Include="Projectile.hpp" />
     <ClInclude Include="Renderer.hpp" />
+    <ClInclude Include="Manager.hpp" />
     <ClInclude Include="shapes.hpp" />
     <ClInclude Include="TileMap.hpp" />
     <ClInclude Include="Vector.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="60secGame.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

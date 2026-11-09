@@ -4,9 +4,11 @@
 #include <iostream>
 #include "GamesEngineeringBase.hpp"
 #include "Renderer.hpp"
+#include <random>
 
 const int TILE_SIZE = 32;
-const int NUM_TILE_TYPES = 6;
+const int NUM_TILE_TYPES = 10;
+const int LOCKED_DOOR_TILE = 9;
 
 class TileMap
 {
@@ -85,7 +87,7 @@ public:
             return true;
         }
        
-        return solid_[tileAt(col, row)];
+        return isPassableTile[tileAt(col, row)];
     }
     //int x and y are player left corner position
     //int w and h are size of the character image
@@ -110,6 +112,38 @@ public:
         }
 
         return false;
+    }
+
+
+    bool FindRandomSpot(std::mt19937& gen, int w, int h, const Vec2f& avoidCentre, float minDistance, Vec2f& out)
+    {
+        std::uniform_int_distribution<int> randomX(0, widthPixels() - w);
+        std::uniform_int_distribution<int> randomY(0, heightPixels() - h);
+        for (int i = 0; i < 100; i++) // tries 100 random spots in the world for a enemy to spawn
+        {
+            int x = randomX(gen);
+            int y = randomY(gen);
+
+            if (isAreaBlocked(x, y, w, h)) continue; // cant spawn where area is blocked
+
+            //centre of the potential enemy to spawn in at x,y 
+            Vec2f centre = { x + (w / 2.0f), y + (h / 2.0f) };
+            // check if the random spot is near player centre
+            if ((centre - avoidCentre).length() < minDistance) continue;
+
+            out = { static_cast<float>(x), static_cast<float>(y)};
+            return true;
+
+        }
+        return false;
+    } 
+
+    void setPassableTile(int tileId, bool passable)
+    {
+        if (tileId >= 0 && tileId < NUM_TILE_TYPES)
+        {
+            isPassableTile[tileId] = passable;
+        }
     }
 
 
@@ -144,6 +178,6 @@ private:
 
     
     // states which of the tile id is passable/ block movement
-    bool solid_[NUM_TILE_TYPES] = { false, true, false, true, true, false };
-    //                               0      1      2      3     4      5
+    bool isPassableTile[NUM_TILE_TYPES] = { false, true, false, true, true, false, false, false, false, true };
+   
 };

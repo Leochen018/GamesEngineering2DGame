@@ -5,14 +5,21 @@
 #include <iostream>
 #include "TileMap.hpp"
 #include "GameEntity.hpp"
+#include "Projectile.hpp"
+#include "GameStatistics.hpp"
 
 
 const int MAX_HEALTH = 10;
-class Player : public SpriteEntity
+const int MAX_MANA = 20;
+const int MANA_KILLS = 3; //kills 3 enemies when activate mana
+const int MANA_COST = 10;
+
+class Player : public CharacterEntity
 {
 public:
-	Player(const Vec2f& position, const GamesEngineeringBase::Image* image, TileMap* map, float speed = 300.0f)
-		: SpriteEntity(position, image), map_(map), speed_(speed)
+	Player(const Vec2f& position, const GamesEngineeringBase::Image* image, TileMap* map, float speed,GameStatistics* stats)
+		: CharacterEntity(position, image, MAX_HEALTH), map_(map), speed_(speed), stats_(stats)
+		, manaBar_(this, MAX_MANA, AttributeBarType::Mana_Bar, 20.0f)
 	{
 		
 	}
@@ -44,13 +51,10 @@ public:
 	}
 	void TakeDamage(int amount)
 	{
-		health_ -= amount;
-		if (health_ < 0)
-		{
-			health_ = 0;
-		}
+		CharacterEntity::TakeDamage(amount);
+		std::cout << "Hit! Health: " << health_ << "\n";
 	}
-	void Heal(int amount)
+	void AddHealth(int amount)
 	{
 		health_ += amount;
 		if (health_ > MAX_HEALTH)
@@ -58,6 +62,40 @@ public:
 			health_ = MAX_HEALTH;
 		}
 	}
+	void AddMana(int amount)
+	{
+		mana_ += amount;
+		if (mana_ > MAX_MANA)
+		{
+			mana_ = MAX_MANA;
+		}
+	}
+	bool UseMana(int cost)
+	{
+		// base case: check if player have enough mana to activate 
+		if (mana_ < cost)  
+		{
+			return false;
+		}
+		mana_ -= cost;
+		return true;
+	}
+
+	// uses base class draw method and draw mana bar
+	virtual void Draw(GamesEngineeringBase::Window& canvas, const Camera& camera) override
+	{
+		CharacterEntity::Draw(canvas, camera);   
+		manaBar_.SetValue(mana_);
+		manaBar_.Update(0.0f);                   
+		manaBar_.Draw(canvas, camera);
+	}
+
+
+	bool IsFullMana() const { return mana_ >= MAX_MANA; }
+	int GetMana() const { return mana_; }
+
+
+
 	void CollectPickups(PickUpEntity* pickups, int count)
 	{
 		Vec2f pos = GetPosition();
@@ -71,18 +109,50 @@ public:
 
 			switch (item.GetType())
 			{
-			case PickUpType::Health:
+			case ItemType::Health:
 				if (!IsFullHealth())
 				{
-					Heal(item.GetAmount());
+					AddHealth(item.GetAmount());
 					item.Collect();
-					std::cout << "Healed! Health: " << GetHealth() << "\n";
+					stats_->healthPotionsUsed++;
+					std::cout << "used health potion. Health: " << GetHealth() << "\n";
 
 				}
 				break;
-			case PickUpType::Special:
-				// later: AddSpecial(); item.Collect();
+			case ItemType::Mana:
+				if (!IsFullMana())
+				{
+					AddMana(item.GetAmount());
+					item.Collect();
+					stats_->manaPotionsUsed++;
+					std::cout << "used mana " << GetMana() << " times \n";
+				}
 				break;
+			case ItemType::Key:
+				hasKey_ = true;
+				item.Collect();                  // key disappears from the map
+				map_->setPassableTile(LOCKED_DOOR_TILE,false);
+				std::cout << "Got the key\n";
+				break;
+			}
+		}
+	}
+
+	void ApplyEnemyProjectile(ProjectileManager& projectiles)
+	{
+		
+		for (int i = 0; i < projectiles.Count(); i++)
+		{
+			ProjectileEntity& proj = projectiles.Get(i);
+			if (!proj.IsAlive() || proj.IsFromPlayer()) continue;   // only live ENEMY bullets
+
+			Vec2f projPos = proj.GetPosition();
+			if (OverlapsBox(projPos.x_, projPos.y_, proj.GetImageWidth(), proj.GetImageHeight()))
+			{
+				TakeDamage(proj.GetDamage());
+				proj.Disable();                                        // bullet disappears on hit
+				stats_->shotsTaken++;
+				stats_->damageTaken+=proj.GetDamage();
 			}
 		}
 	}
@@ -137,10 +207,10 @@ public:
 	}
 
 
-	bool IsAlive() const { return health_ > 0; }
 	bool IsFullHealth() const { return health_ >= MAX_HEALTH; }
-	int  GetHealth() const { return health_; }
-	int  GetMaxHealth() const { return MAX_HEALTH; }
+	bool HasKey() const { return hasKey_; }
+	
+	
 private:
 
 	TileMap* map_;
@@ -153,8 +223,13 @@ private:
 	float shootCoolDown_ = 0.2f;
 	float shootTimer_ = 0.0f;
 
-	
-	int health_ = 4;
+
+	GameStatistics* stats_;
+
+	int mana_ = 0;
+	bool hasKey_ = false;
+	AttributeBar manaBar_;
+
 
 	bool IsBlockedByObstacle(float x, float y, int w, int h) const
 	{

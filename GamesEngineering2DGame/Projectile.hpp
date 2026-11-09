@@ -52,7 +52,7 @@ public:
 	}
 
 	bool IsAlive() const { return alive_; }
-	void Kill() { alive_ = false; }
+	void Disable() { alive_ = false; }
 	bool IsFromPlayer() const { return fromPlayer_; }
 	int  GetDamage() const { return damage_; }
 private:
@@ -64,16 +64,43 @@ private:
 	int damage_ = 1;
 };
 
-inline bool SpawnProjectile(ProjectileEntity* pool, int count, const Vec2f& centre, const Vec2f& direction,
-	float speed, const GamesEngineeringBase::Image* image, TileMap* map, bool fromPlayer, int damage)
+class ProjectileManager
 {
-	for (int i = 0; i < count; i++)
+public:
+	static const int MAX_AMOUNT_PROJECTILE = 200; // 200 is maximum amount of projectiles in the world at given time
+
+	bool SpawnProjectile(const Vec2f& centre, const Vec2f& direction, float speed,
+		const GamesEngineeringBase::Image* image, TileMap* map, bool fromPlayer, int damage)
 	{
-		if (!pool[i].IsAlive())
+		for (int i = 0; i < MAX_AMOUNT_PROJECTILE; i++)
 		{
-			pool[i].Fire(centre, direction, speed, image, map, fromPlayer, damage);
-			return true;
+			if (!projectiles_[i].IsAlive()) // checks for a free slot to fire a projectile
+			{
+				projectiles_[i].Fire(centre, direction, speed, image, map, fromPlayer, damage);
+				return true;
+			}
+		}
+		return false;
+	}
+	void Update(float dt)
+	{
+		for (int i = 0; i < MAX_AMOUNT_PROJECTILE; i++)
+		{
+			projectiles_[i].Update(dt);
 		}
 	}
-	return false;
-}
+
+	void Draw(GamesEngineeringBase::Window& canvas, const Camera& camera)
+	{
+		for (int i = 0; i < MAX_AMOUNT_PROJECTILE; i++)
+		{
+			projectiles_[i].Draw(canvas, camera);
+		}
+	}
+
+
+	int Count() const { return MAX_AMOUNT_PROJECTILE; }
+	ProjectileEntity& Get(int i) { return projectiles_[i]; }
+private:
+	ProjectileEntity projectiles_[MAX_AMOUNT_PROJECTILE];
+};
