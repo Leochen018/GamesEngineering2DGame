@@ -10,14 +10,16 @@
 #include "Camera.hpp"
 #include "Projectile.hpp"
 
-
+//Manager class handles everything that related to one play through
+//when game starts, main creates manager object and set up constructors
+//links player and enmemy to shared stats, spawns the starting enemies
 
 class Manager
 {
 public:
 
 	static const int MAX_PICKUPS = 20; // maximum potions slots for each game
-	static const int HEAL_AMOUNT = 8; // how much the health potion heals the player
+	static const int HEAL_AMOUNT = 5; // how much the health potion heals the player
 	static const int MANA_AMOUNT = 15;
 	
 	static const int HEAL_POTION_CHANCE = 20; //20 percent chance of heal potion to drop when enemy is killed
@@ -37,12 +39,15 @@ public:
 		, healthPotionImage_(&healthPotionImage)
 		, manaPotionImage_(&manaPotionImage)
 	{
+		camera_.SetBounded(!map.isInfiniteWorld());
 		player_.SetObstacles(enemies_.GetObstacles(), enemies_.GetMaxEnemies());	
 		enemies_.SpawnRandom(10, gen);
 
-		pickups_[4].Place({ 1900.0f, 300.0f }, &keyImage, ItemType::Key, 0);
-		
 
+		if (!map.isInfiniteWorld())
+		{
+			pickups_[4].Place({ 1900.0f, 300.0f }, &keyImage, ItemType::Key, 0);
+		}
 	}
 	void SpawnPotion(ItemType type, const Vec2f& centre)
 	{

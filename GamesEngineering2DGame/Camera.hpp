@@ -18,7 +18,10 @@ public:
 	{
 		camX = target.x_ - (screenW / 2);
 		camY = target.y_ - (screenH / 2);
-
+		if (!bounded_)
+		{
+			return;
+		}
 		if (camX < 0)
 		{
 			camX = 0;
@@ -41,6 +44,10 @@ public:
 		return { worldPos.x_ - static_cast<float>(camX),
 				 worldPos.y_ - static_cast<float>(camY) };
 	}
+	void SetBounded(bool bounded)
+	{
+		bounded_ = bounded;
+	}
 
 	int getX() const 
 	{
@@ -56,4 +63,5 @@ private:
 	int camX, camY;  // world position of the camera top left corner
 	int screenW, screenH;  // screen coordinates of the 
 	int worldW, worldH;  // size of the world 
+	bool bounded_ = true;
 };

@@ -201,6 +201,7 @@ public:
 		}
 		for (int i = 0; i < MAX_ENEMIES; i++)
 		{
+			//does the following when enemy is dead 
 			if (enemies_[i] != nullptr && !enemies_[i]->IsAlive())
 			{
 				stats_->kills++;
@@ -226,6 +227,7 @@ public:
 		{
 			if (enemies_[i] == nullptr) continue;
 
+			// kills the enemy. enemy dealt their health amount of damage
 			enemies_[i]->TakeDamage(enemies_[i]->GetHealth());
 			count++;
 			if (count == num)
@@ -259,8 +261,8 @@ public:
 private:
 
 
-	EnemyEntity* enemies_[MAX_ENEMIES] = {};
-	SpriteEntity* obstacles_[MAX_ENEMIES] = {};
+	EnemyEntity* enemies_[MAX_ENEMIES] = {}; // set it to null ptr
+	SpriteEntity* obstacles_[MAX_ENEMIES] = {}; // player shouldnt be able to walk through enemies. checks for overlapping 
 
 	TileMap* map_;
 	const GamesEngineeringBase::Image* image_; // enemy image
@@ -276,7 +278,7 @@ private:
 	float minSpawnDistance_ = 600.0f; // never spawn this close to the player
 
 	GameStatistics* stats_;
-	int enemyKilledScore_ = 50;
+	int enemyKilledScore_ = 50;  // 50 points for each enemy kill
 
 	Vec2f num_enemies_deaths_[MAX_ENEMIES];
 	int deathCount_ = 0;

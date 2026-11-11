@@ -31,7 +31,7 @@ int main() {
 
     // Load the map ONCE, before the loop
     TileMap map;
-    if (!map.loadImages() || !map.load("Resources/level1.txt") || !AttributeBar::LoadImages())
+    if (!map.loadImages()|| !AttributeBar::LoadImages())
     {
         std::cout << "failed to load resources\n";
         
@@ -121,13 +121,24 @@ int main() {
         {
             Renderer_draw_image(canvas, { 0.0f, 0.0f }, mainMenuImage);
 
-            if (canvas.keyPressed(VK_RETURN))
+            if (canvas.keyPressed('1'))
             {
+                map.load("Resources/level1.txt");
                 delete manager;
                 manager = new Manager(canvas, map, gen, playerImage, enemyImage, enemy_projectileImage, potionHealthImage, potionManaImage,keyImage);
                 timer.dt();
                 state = GAME_STATE::PLAYING_GAME;
             }
+            else if (canvas.keyPressed('2'))
+            {
+                map.generateInfiniteWorld(100, 100, gen);  // infinite map
+                delete manager;
+                manager = new Manager(canvas, map, gen, playerImage, enemyImage, enemy_projectileImage, potionHealthImage, potionManaImage, keyImage);
+                timer.dt();
+                state = GAME_STATE::PLAYING_GAME;
+            }
+
+
         }
 
 
@@ -239,13 +250,7 @@ int main() {
 
             if (!manager->player_.IsAlive())
             {
-                std::cout << "Score: " << manager->stats_.score
-                    << "  Kills: " << manager->stats_.kills
-                    << "  Shots: " << manager->stats_.shotsFired
-                    << "  Taken: " << manager->stats_.shotsTaken
-                    << "  Damage: " << manager->stats_.damageTaken
-                    << "  Potions: " << manager->stats_.healthPotionsUsed
-                    << "  Time: " << manager->stats_.timeSurvived << "s\n";
+                manager->stats_.Print();
                 state = GAME_STATE::GAME_OVER;
             }
 

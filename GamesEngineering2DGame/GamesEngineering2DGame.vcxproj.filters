@@ -59,7 +59,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="dungeonGame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

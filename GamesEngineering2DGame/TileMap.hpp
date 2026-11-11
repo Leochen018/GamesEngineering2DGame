@@ -38,6 +38,7 @@ public:
 
     bool load(const std::string& filename)
     {
+        infinite_ = false;
         std::ifstream infile(filename);
         if (!infile.is_open())
         {
@@ -72,7 +73,60 @@ public:
 
     }
     // converts the 2d array tile map position to the 1d array position 
-    int tileAt(int col, int row) const { return tiles_[row * width_ + col]; }
+    int tileAt(int column, int row) const 
+    {
+        if (infinite_)
+        {
+            // for infinite map, the column and row are wrapped back to the grid first
+         
+            column = ((column % width_) + width_) % width_;
+            row = ((row % height_) + height_) % height_;
+        }
+        return tiles_[row * width_ + column];
+    }
+
+    void generateInfiniteWorld(int width, int height, std::mt19937& gen)
+    {
+        infinite_ = true;
+        delete[] tiles_;
+        width_ = width;
+        height_ = height;
+        tiles_ = new int [width_ * height_];
+
+        std::uniform_int_distribution<int> distribution(0, 99);
+        for (int row = 0; row < height_; row++)
+        {
+            for (int column = 0; column < width_; column++)
+            {
+                int i = row * width_ + column;
+                tiles_[i] = 0;    // ground by default
+
+                // walls only every 4th column and row, so gaps are always 3 tiles (96 px) wide
+                if (column % 4 == 0 && row % 4 == 0 && distribution(gen) < 50)
+                {
+                    tiles_[i] = 3;    // wall
+                }
+            }
+        }
+
+        //player pos is at  300, 400 which is column 9, row 12
+        // we want to clear area around the player's start
+        //clear 4 tiles from every direction
+        
+        for (int row = 8; row <= 16; row++)
+        {
+            for (int column = 5; column <= 13; column++)
+            {
+                tiles_[row * width_ + column] = 0;
+            }
+        }
+
+    }
+
+    bool isInfiniteWorld() const 
+    {
+        return infinite_;
+    }
 
     // gets the width and height pixels of the tile map
     int widthPixels()  const { return width_ * TILE_SIZE; }
@@ -82,7 +136,7 @@ public:
     // check if the position is passable
     bool isSolidTile(int col, int row)
     {
-        if (col < 0 || row < 0 || col >= width_ || row >= height_)
+        if (!infinite_ && (col < 0 || row < 0 || col >= width_ || row >= height_))
         {
             return true;
         }
@@ -93,21 +147,31 @@ public:
     //int w and h are size of the character image
     bool isAreaBlocked(int x, int y, int w, int h)
     {
+
+        if (infinite_)
+        {
+           //take the box's top left corner and wrap it back inside the generated grid
+           //so that x and y always end up between 0 and 3199 
+            x = ( (x %  widthPixels() ) + widthPixels()) % widthPixels();
+            y = ((y % heightPixels()) + heightPixels()) % heightPixels();
+
+        }
         // anything outside the world is blocked
-        if (x < 0 || y < 0 || x + w > widthPixels() || y + h > heightPixels())
+        else if (x < 0 || y < 0 || x + w > widthPixels() || y + h > heightPixels())
         {
             return true;
         }
         int firstCol = x / TILE_SIZE;
-        int lastCol = (x + w - 1) / TILE_SIZE;
         int firstRow = y / TILE_SIZE;
+
+        int lastCol = (x + w - 1) / TILE_SIZE;
         int lastRow = (y + h - 1) / TILE_SIZE;
 
-        for (int r = firstRow; r <= lastRow; r++)
+        for (int row = firstRow; row <= lastRow; row++)
         {
-            for (int c = firstCol; c <= lastCol; c++)
+            for (int column = firstCol; column <= lastCol; column++)
             {
-                if (isSolidTile(c, r)) return true;
+                if (isSolidTile(column, row)) return true;
             }
         }
 
@@ -150,22 +214,50 @@ public:
     // camX,camY are the position of the camera. follows top left corner of the player 
     void draw(GamesEngineeringBase::Window& canvas, int camX, int camY)
     {
+        if (infinite_)
+        {
+            camX = ( (camX % widthPixels()) + widthPixels() ) % widthPixels();
+            camY = ( (camY % heightPixels()) + heightPixels() ) % heightPixels();
+        }
+
         int firstCol = camX / TILE_SIZE;
         int firstRow = camY / TILE_SIZE;
 
         int lastCol = (camX + (int)canvas.getWidth() - 1) / TILE_SIZE;
         int lastRow = (camY + (int)canvas.getHeight() - 1) / TILE_SIZE;
 
-        if (firstCol < 0) firstCol = 0;
-        if (firstRow < 0) firstRow = 0;
-        if (lastCol >= width_)  lastCol = width_ - 1;
-        if (lastRow >= height_) lastRow = height_ - 1;
 
-        for (int r = firstRow; r <= lastRow; r++)
-            for (int c = firstCol; c <= lastCol; c++)
+        //for fixed map: dont go past the edges
+        if (!infinite_)
+        {
+            if (firstCol < 0)
+            {
+                firstCol = 0;
+            }
+            if (firstRow < 0)
+            {
+                firstRow = 0;
+            }
+            if (lastCol >= width_)
+            {
+                lastCol = width_ - 1;
+            }
+            if (lastRow >= height_)
+            {
+                lastRow = height_ - 1;
+            }
+        }
+        //draw both maps
+        for (int row = firstRow; row <= lastRow; row++)
+        {
+            for (int column = firstCol; column <= lastCol; column++)
+            {
                 Renderer_draw_image(canvas,
-                    { (float)(c * TILE_SIZE - camX), (float)(r * TILE_SIZE - camY) },
-                    images_[tileAt(c, r)]);
+                    { (float)(column * TILE_SIZE - camX), (float)(row * TILE_SIZE - camY) },
+                    images_[tileAt(column, row)]);
+            }
+        }
+
     }
 
 
@@ -174,7 +266,7 @@ private:
 	GamesEngineeringBase::Image images_[NUM_TILE_TYPES]; // stores the  number of different type of tiles
 	int* tiles_;
 	int width_, height_;  // size= of the tile map
-
+    bool infinite_ = false;
 
     
     // states which of the tile id is passable/ block movement

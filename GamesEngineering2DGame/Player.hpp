@@ -9,7 +9,7 @@
 #include "GameStatistics.hpp"
 
 
-const int MAX_HEALTH = 10;
+const int MAX_HEALTH = 15;
 const int MAX_MANA = 20;
 const int MANA_KILLS = 3; //kills 3 enemies when activate mana
 const int MANA_COST = 10;
